@@ -94,15 +94,23 @@ Allocator *arena_allocator_create(void *chunk, usize chunk_size,
     *error = arena_allocator_error_chunk_to_small;
     return NULL;
   }
+
   Arena *arena = chunk;
   arena->capacity = chunk_size;
   arena->length = sizeof(Allocator);
 
-  Allocator *allocator = chunk;
-  allocator->ctx = arena;
-  allocator->alloc = (Allocator_Alloc_Func)arena_alloc;
-  allocator->realloc = (Allocator_Realloc_Func)arena_realloc;
-  allocator->free = (Allocator_Free_Func)arena_free;
+  Allocator *allocator = arena_alloc(arena, sizeof(*allocator), error);
+  if (UNLIKELY(error && *error)) {
+    return NULL;
+  }
+
+  *allocator = (Allocator){
+      .alloc = (Allocator_Alloc_Func)arena_alloc,
+      .realloc = (Allocator_Realloc_Func)arena_realloc,
+      .free = (Allocator_Free_Func)arena_free,
+      .ctx = arena,
+  };
+
   return allocator;
 }
 
