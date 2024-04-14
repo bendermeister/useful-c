@@ -53,7 +53,7 @@ Object_Pool *object_pool_create(Allocator *allocator, usize object_size,
 
   Object_Pool *pool = allocator_alloc(allocator, sizeof(*pool), error);
   if (UNLIKELY(error && *error)) {
-    return nullptr;
+    return 0;
   }
 
   *pool = (Object_Pool){
@@ -66,8 +66,8 @@ Object_Pool *object_pool_create(Allocator *allocator, usize object_size,
   object_buffer_add(pool, initial_capacity, error);
   if (UNLIKELY(error && *error)) {
     // TODO how to handle error in free?
-    allocator_free(pool->allocator, pool, nullptr);
-    return nullptr;
+    allocator_free(pool->allocator, pool, 0);
+    return 0;
   }
   return pool;
 }
@@ -95,7 +95,7 @@ static void *buffer_pop(Object_Pool *pool, Error **error) {
   if (pool->buffer_index >= pool->buffer_capacity) {
     object_buffer_add(pool, pool->buffer_capacity << 1, error);
     if (UNLIKELY(error && *error)) {
-      return nullptr;
+      return 0;
     }
   }
   void *p = pool->object_buffer[pool->current_buffer] +
@@ -106,7 +106,7 @@ static void *buffer_pop(Object_Pool *pool, Error **error) {
 
 static void *list_pop(Object_Pool *pool) {
   if (!pool->object_list) {
-    return nullptr;
+    return 0;
   }
   void *p = pool->object_list;
   pool->object_list = *(void **)pool->object_list;
@@ -125,7 +125,7 @@ void *object_pool_alloc(Object_Pool *pool, Error **error) {
   }
   p = buffer_pop(pool, error);
   if (UNLIKELY(error && *error)) {
-    return nullptr;
+    return 0;
   }
   return p;
 }
