@@ -7,12 +7,14 @@ typedef struct Allocator Allocator;
 
 Error *allocator_global_error_out_of_memory = &ERROR_MAKE("out of memory");
 
-void *allocator_alloc(Allocator *interface, usize num_bytes, Error **error) {
+__attribute__((malloc)) void *allocator_alloc(Allocator *interface,
+                                              usize num_bytes, Error **error) {
   return interface->alloc(interface->ctx, num_bytes, error);
 }
 
-void *allocator_realloc(Allocator *interface, void *chunk, usize num_bytes,
-                        Error **error) {
+__attribute__((malloc)) void *allocator_realloc(Allocator *interface,
+                                                void *chunk, usize num_bytes,
+                                                Error **error) {
   return interface->realloc(interface->ctx, chunk, num_bytes, error);
 }
 

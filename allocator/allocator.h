@@ -6,10 +6,12 @@
 
 typedef void Allocator;
 
-void *allocator_alloc(Allocator *interface, usize num_bytes, Error **error);
+__attribute__((malloc)) void *allocator_alloc(Allocator *interface,
+                                              usize num_bytes, Error **error);
 
-void *allocator_realloc(Allocator *interface, void *chunk, usize num_bytes,
-                        Error **error);
+__attribute__((malloc)) void *allocator_realloc(Allocator *interface,
+                                                void *chunk, usize num_bytes,
+                                                Error **error);
 
 void allocator_free(Allocator *interface, void *chunk, Error **error);
 
