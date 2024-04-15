@@ -15,17 +15,15 @@ static void dump_vec(usize len, int vec[len]) {
 
 int main(void) {
   printf("Hello World!\n");
-  Allocator *allocator = allocator_get_global();
-
-  int *vec = vec_create(allocator, int, 8, NULL);
+  int *vec = vec_create(allocator_global, int, 8, NULL);
 
   // reserve some 50 ints worth of space
-  vec_reserve(&vec, allocator, 50, NULL);
+  vec_reserve(&vec, allocator_global, 50, NULL);
 
   // vec_more makes sure enough space is available increases the length by one
   // and returns a pointer to the last element
   for (int i = 0; i < 100; ++i) {
-    *vec_more(&vec, allocator, NULL) = i;
+    *vec_more(&vec, allocator_global, NULL) = i;
   }
 
   // vec_length returns the current length of the vector
@@ -38,12 +36,12 @@ int main(void) {
   dump_vec(vec_length(&vec), vec);
 
   for (int i = 0; i < 69; ++i) {
-    *vec_insert(&vec, allocator, 10, NULL) = i;
+    *vec_insert(&vec, allocator_global, 10, NULL) = i;
   }
 
   dump_vec(vec_length(&vec), vec);
 
-  vec_destroy(&vec, allocator, NULL);
+  vec_destroy(&vec, allocator_global, NULL);
 
   return 0;
 }

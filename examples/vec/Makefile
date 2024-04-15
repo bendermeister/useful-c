@@ -1,4 +1,4 @@
-FLAGS := -g -std=c2x -Wall -Werror -Wextra -fsanitize=address,leak,undefined,unreachable
+FLAGS := -pedantic -g -std=c2x -Wall -Werror -Wextra -fsanitize=address,leak,undefined,unreachable
 
 all: main vec allocator
 	${CC} ${FLAGS} main.o vec.o allocator.o

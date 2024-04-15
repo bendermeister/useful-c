@@ -25,14 +25,12 @@ void print_vec(struct Vec3 *v) {
 
 int main(void) {
   // Get global allocator interface. This is just a malloc wrapper
-  Allocator *allocator = allocator_get_global();
-
   // Error channel
   Error *error = NULL;
 
   // Create a new Object Pool
   Object_Pool *pool =
-      object_pool_create(allocator, sizeof(struct Vec3), 8, &error);
+      object_pool_create(allocator_global, sizeof(struct Vec3), 8, &error);
 
   // check for errors
   if (error) {

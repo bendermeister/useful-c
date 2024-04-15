@@ -23,11 +23,12 @@ int main(void) {
 
   Error *error = NULL;
 
-  Allocator *arena = arena_allocator_create(chunk, sizeof(chunk), &error);
+  Allocator arena_ = arena_allocator_create(chunk, sizeof(chunk), &error);
   if (error) {
     fprintf(stderr, "Error: %s", error->message);
     abort();
   }
+  Allocator *arena = &arena_;
 
   int *vec = vec_create(arena, int, 8, &error);
   if (error) {
