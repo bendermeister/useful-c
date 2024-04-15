@@ -13,10 +13,6 @@ __attribute__((malloc)) void *vec_create_impl(Allocator *allocator,
                                               usize initial_capacity,
                                               Error **error);
 
-/* #define vec_more(VEC, ALLOC, ERROR) \ */
-/*   (((typeof(**(VEC)))*)vec_more_impl((void **)(VEC), ALLOC, sizeof(**(VEC)),
- * \ */
-/*                                      ERR)) */
 #define vec_more(VEC, ALLOC, ERROR)                                            \
   (typeof(**(VEC)) *)vec_more_impl((void **)(VEC), ALLOC, sizeof(**(VEC)),     \
                                    ERROR)
@@ -31,9 +27,6 @@ usize vec_length_impl(void **vec);
 void vec_reserve_impl(void **vec, Allocator *allocator, usize object_size,
                       usize to_reserve, Error **error);
 
-/* #define vec_insert(VEC, ALLOC, INDEX, ERROR) \ */
-/*   (((typeof(**(VEC)))*)vec_insert_impl((void **)(VEC), ALLOC, INDEX, \ */
-/*                                        sizeof(**(VEC)), ERR)) */
 #define vec_insert(VEC, ALLOC, INDEX, ERROR)                                   \
   (typeof(**(VEC)) *)vec_insert_impl((void **)VEC, ALLOC, INDEX,               \
                                      sizeof(**(VEC)), ERROR)

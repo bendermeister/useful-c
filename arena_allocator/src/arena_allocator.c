@@ -30,8 +30,10 @@ __attribute__((const)) static usize next_sixteen(const usize x) {
   return ((x - 1) | 15) + 1;
 }
 
-__attribute__((malloc)) void *arena_alloc(Arena *arena, usize num_bytes,
+__attribute__((malloc)) void *arena_alloc(void *arena_, usize num_bytes,
                                           Error **error) {
+
+  Arena *arena = arena_;
 
   arena->length = next_sixteen(arena->length);
 
@@ -51,8 +53,10 @@ __attribute__((malloc)) void *arena_alloc(Arena *arena, usize num_bytes,
   return chunk;
 }
 
-__attribute__((malloc)) void *arena_realloc(Arena *arena, void *chunk,
+__attribute__((malloc)) void *arena_realloc(void *arena_, void *chunk,
                                             usize num_bytes, Error **error) {
+  Arena *arena = arena_;
+
   // realloc(NULL, ...)
   if (UNLIKELY(!chunk)) {
     return arena_alloc(arena, num_bytes, error);
@@ -83,9 +87,10 @@ __attribute__((malloc)) void *arena_realloc(Arena *arena, void *chunk,
   return new_chunk;
 }
 
-void arena_free(Arena *arena, void *chunk) {
+void arena_free(void *arena, void *chunk, Error **error) {
   UNUSED(arena);
   UNUSED(chunk);
+  UNUSED(error);
 }
 
 Allocator *arena_allocator_create(void *chunk, usize chunk_size,
@@ -105,9 +110,9 @@ Allocator *arena_allocator_create(void *chunk, usize chunk_size,
   }
 
   *allocator = (Allocator){
-      .alloc = (Allocator_Alloc_Func)arena_alloc,
-      .realloc = (Allocator_Realloc_Func)arena_realloc,
-      .free = (Allocator_Free_Func)arena_free,
+      .alloc = arena_alloc,
+      .realloc = arena_realloc,
+      .free = arena_free,
       .ctx = arena,
   };
 
