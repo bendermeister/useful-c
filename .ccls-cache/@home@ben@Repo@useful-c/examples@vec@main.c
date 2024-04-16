@@ -41,8 +41,7 @@ int main(void) {
   dump_vec(length, vec);
 
   for (int i = 0; i < 69; ++i) {
-    vec = vec_grow_if_needed(allocator_global, vec, sizeof(*vec), length,
-                             &capacity, NULL);
+    vec = vec_grow_if_needed(allocator_global, vec, sizeof(*vec), length, &capacity, NULL);
     *(int *)vec_insert(vec, sizeof(*vec), &length, 10) = i;
   }
 

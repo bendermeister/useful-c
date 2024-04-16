@@ -4,7 +4,7 @@
 #include "../../arena_allocator/arena_allocator.h"
 #include "../../vec/vec.h"
 
-static byte chunk[1024] = {0};
+static byte chunk[4096] = {0};
 
 static void dump_vec(usize len, int vec[len]) {
   puts("=====================================================================");
@@ -20,31 +20,39 @@ static void dump_vec(usize len, int vec[len]) {
 }
 
 int main(void) {
-
   Error *error = NULL;
 
-  Allocator *arena = arena_allocator_create(chunk, sizeof(chunk), &error);
+  Allocator arena_ = arena_allocator_create(chunk, sizeof(chunk), &error);
   if (error) {
     fprintf(stderr, "Error: %s", error->message);
     abort();
   }
+  Allocator *arena = &arena_;
 
-  int *vec = vec_create(arena, int, 8, &error);
+  int *vec = NULL;
+  usize length = 0;
+  usize capacity = 0;
+
+  vec = vec_reserve(arena, vec, sizeof(*vec), &capacity, 12, &error);
   if (error) {
     fprintf(stderr, "Error: %s", error->message);
     abort();
   }
 
   for (int i = 0; 1; ++i) {
-    int *more = vec_more(&vec, arena, &error);
+    vec =
+        vec_grow_if_needed(arena, vec, sizeof(*vec), length, &capacity, &error);
     if (error) {
       break;
     }
-    *more = i;
+    length += 1;
+    vec[length] = i;
   }
   error = NULL;
 
-  dump_vec(vec_length(&vec), vec);
+  dump_vec(length, vec);
+
+  allocator_free(arena, vec, NULL);
 
   printf("Hello World!\n");
   return 0;

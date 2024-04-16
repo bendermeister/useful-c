@@ -37,7 +37,7 @@ allocator_realloc(Allocator *allocator, void *chunk, usize num_bytes,
 
 __attribute__((unused)) static void allocator_free(Allocator *allocator,
                                                    void *chunk, Error **error) {
-  return allocator->vtable->free(allocator->ctx, chunk, error);
+  allocator->vtable->free(allocator->ctx, chunk, error);
 }
 
 extern Error *allocator_global_error_out_of_memory;

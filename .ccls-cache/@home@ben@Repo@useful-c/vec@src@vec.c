@@ -1,115 +1,65 @@
 #include "../vec.h"
 #include "../../macro_util/macro_util.h"
 
-#include <stddef.h>
 #include <string.h>
 
-typedef struct Head Head;
-struct Head {
-  usize length;
-  usize capacity;
-  byte buffer[];
-};
-
-static Head *get_head(void *v) { return ((Head *)v) - 1; }
-
-__attribute__((malloc)) void *vec_create_impl(Allocator *allocator,
-                                              usize object_size,
-                                              usize initial_capacity,
-                                              Error **error) {
-
-  if (initial_capacity == 0) {
-    initial_capacity = 4;
-  }
-
-  Head *vec = allocator_alloc(
-      allocator, object_size * initial_capacity + sizeof(*vec), error);
+static void *vec_realloc(Allocator *allocator, void *vec, usize object_size,
+                         usize *capacity, usize new_capacity, Error **error) {
+  void *new_vec =
+      allocator_realloc(allocator, vec, object_size * new_capacity, error);
   if (UNLIKELY(error && *error)) {
-    return NULL;
+    return vec;
+  }
+  *capacity = new_capacity;
+  return new_vec;
+}
+
+void *vec_grow_if_needed(Allocator *allocator, void *vec, usize object_size,
+                         usize length, usize *capacity, Error **error) {
+  if (LIKELY(length < *capacity)) {
+    return vec;
   }
 
-  vec->capacity = initial_capacity;
-  vec->length = 0;
-  return vec->buffer;
-}
+  usize new_capacity;
 
-static void vec_realloc(void **vec, Allocator *allocator, usize object_size,
-                        usize new_capacity, Error **error) {
-  Head *head = get_head(*vec);
-
-  head = allocator_realloc(allocator, head,
-                           sizeof(*head) + object_size * new_capacity, error);
-  if (UNLIKELY(error && *error)) {
-    return;
+  if (UNLIKELY(*capacity == 0)) {
+    new_capacity = 16;
+  } else {
+    new_capacity = *capacity << 1;
   }
-  head->capacity = new_capacity;
-  *vec = head + 1;
+  return vec_realloc(allocator, vec, object_size, capacity, new_capacity,
+                     error);
 }
 
-void *vec_more_impl(void **vec, Allocator *allocator, usize object_size,
-                    Error **error) {
-  Head *head = get_head(*vec);
-  if (head->length >= head->capacity) {
-    vec_realloc(vec, allocator, object_size, head->capacity << 1, error);
-    if (UNLIKELY(error && *error)) {
-      return NULL;
-    }
-    head = get_head(*vec);
+void *vec_reserve(Allocator *allocator, void *vec, usize object_size,
+                  usize *capacity, usize to_reserve, Error **error) {
+  if (*capacity >= to_reserve) {
+    return vec;
   }
-  void *p = &head->buffer[head->length * object_size];
-  head->length += 1;
-  return p;
+  return vec_realloc(allocator, vec, object_size, capacity, to_reserve, error);
 }
 
-usize vec_length_impl(void **vec) { return get_head(*vec)->length; }
-
-void vec_reserve_impl(void **vec, Allocator *allocator, usize object_size,
-                      usize to_reserve, Error **error) {
-  Head *head = get_head(*vec);
-  if (head->capacity >= to_reserve) {
-    return;
+void *vec_shrink(Allocator *allocator, void *vec, usize object_size,
+                 usize length, usize *capacity, Error **error) {
+  if (UNLIKELY(length == *capacity)) {
+    return vec;
   }
-  vec_realloc(vec, allocator, object_size, to_reserve, error);
+  return vec_realloc(allocator, vec, object_size, capacity, length, error);
 }
 
-void *vec_insert_impl(void **vec, Allocator *allocator, usize index,
-                      usize object_size, Error **error) {
-  Head *head = get_head(*vec);
-  head->length += 1;
-
-  if (head->length >= head->capacity) {
-    vec_realloc(vec, allocator, object_size, head->capacity << 1, error);
-    if (UNLIKELY(error && *error)) {
-      return NULL;
-    }
-    head = get_head(*vec);
-  }
-
-  (void)memmove(&head->buffer[(index + 1) * object_size],
-                &head->buffer[index * object_size],
-                (head->length - index) * object_size);
-  return &head->buffer[index * object_size];
+void vec_remove(void *vec, usize object_size, usize *length, usize index) {
+  byte *dest = (byte *)vec + index * object_size;
+  byte *src = dest += object_size;
+  usize n = (*length - 1 - index) * object_size;
+  *length -= 1;
+  memmove(dest, src, n);
 }
 
-void vec_shrink_impl(void **vec, Allocator *allocator, usize object_size,
-                     Error **error) {
-  vec_realloc(vec, allocator, object_size, get_head(*vec)->length, error);
-}
-
-void vec_destroy_impl(void **vec, Allocator *allocator, Error **error) {
-  allocator_free(allocator, get_head(*vec), error);
-}
-
-void vec_remove_impl(void **vec, usize index, usize object_size) {
-  Head *head = get_head(*vec);
-
-  head->length -= 1;
-
-  if (head->length == index) {
-    return;
-  }
-
-  (void)memmove(&head->buffer[index * object_size],
-                &head->buffer[(index + 1) * object_size],
-                object_size * (head->length - index));
+void *vec_insert(void *vec, usize object_size, usize *length, usize index) {
+  byte *src = (byte *)vec + index * object_size;
+  byte *dest = src + object_size;
+  usize n = (*length - index) * object_size;
+  memmove(dest, src, n);
+  *length += 1;
+  return src;
 }
