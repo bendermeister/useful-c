@@ -25,7 +25,8 @@ struct Slice_Head_ {
   byte buffer[];
 };
 
-[[maybe_unused]] [[gnu::pure]] static struct Slice_Head_ *
+[[gnu::assume_aligned(
+    16)]] [[maybe_unused]] [[gnu::pure]] static struct Slice_Head_ *
 slice_get_head_(void *v) {
   return (struct Slice_Head_ *)((byte *)v - sizeof(struct Slice_Head_));
 }
@@ -43,7 +44,8 @@ slice_get_head_(void *v) {
     (TYPE *)slice_create_(object_size, params);                                \
   })
 
-[[maybe_unused]] [[nodiscard]] [[gnu::malloc]] static void *
+[[gnu::assume_aligned(
+    16)]] [[maybe_unused]] [[nodiscard]] [[gnu::malloc]] static void *
 slice_create_(usize object_size, struct Slice_Create_Params_ params) {
 
   struct Slice_Head_ *head = (struct Slice_Head_ *)allocator_alloc(
@@ -97,6 +99,7 @@ slice_realloc_(struct Slice_Head_ *head, usize object_size, usize new_capacity,
     }                                                                          \
     slice_more_(slice, sizeof(*SLICE), params);                                \
   })
+
 [[maybe_unused]] [[nodiscard]] static void *
 slice_more_(void **slice, usize object_size, struct Slice_Params_ params) {
   struct Slice_Head_ *head = slice_get_head_(*slice);
@@ -146,5 +149,8 @@ slice_insert_(void **slice, usize object_size, usize index,
   struct Slice_Head_ *head = slice_get_head_(slice);
   vec_remove(slice, object_size, &head->length, index);
 }
+
+// TODO: binary search
+// TODO: qsort
 
 #endif // SLICE_H_
