@@ -1,6 +1,7 @@
-#ifndef HOLY_TYPES_H_
-#define HOLY_TYPES_H_
+#ifndef TYPES_H_
+#define TYPES_H_
 
+#include <stdbool.h>
 #include <stdint.h>
 
 typedef uint8_t u8;
@@ -18,4 +19,7 @@ typedef int64_t i64;
 typedef uintptr_t usize;
 typedef intptr_t isize;
 
-#endif // HOLY_TYPES_H_
+// TODO: f32 f64 f128
+// TODO: u128 i128
+
+#endif // TYPES_H_

@@ -1,13 +1,10 @@
 CC=clang
-FLAGS := -std=c99 -g -Wall -Wextra -Werror -fsanitize=address,leak,undefined,unreachable
+FLAGS := -pedantic -std=c99 -g -Wall -Wextra -fsanitize=address,leak,undefined,unreachable
 
 all: table
 
-table: table.c allocator.o
+table: table.c
 	${CC} ${FLAGS} $^ -o $@.out
-
-allocator.o: ../src/allocator/src/*
-	${CC} ${FLAGS} -c $^ -o $@
 
 clean:
 	rm -f *.out *.o
