@@ -1,6 +1,9 @@
 # Prerequisites
 *.d
 
+.ccls-cache/*
+docs/*
+
 # Object files
 *.o
 *.ko
