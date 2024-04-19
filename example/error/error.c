@@ -1,11 +1,3 @@
-# Useful C
-a small collection of header only libraries useful when coding c
-
-## Basic Ideas
-### Error Handling
-Error handling is done via `Error` values. Each function that may error accepts an `Error *error` as their last argument. If `NULL` is passed the functions assume no error is possible and will not check anything and just continue executing (NOTE: this invokes UB if an error still occurs). If a pointer is given and an error occurs the pointer is set to the associated error value and the user has to check it. A basic example would look like this.
-
-``` c
 #include "../../src/error.h"
 #include "../../src/types.h"
 #include <stdio.h>
@@ -48,9 +40,3 @@ int main(void) {
 
   return 0;
 }
-```
-
-### Allocator
-
-## Guidelines
-- it must compile with `-std=c99 -pedantic`

@@ -203,8 +203,8 @@ static u8 table_internal_hash_to_control_byte(u64 hash) {
 // TODO: documentation
 static usize table_internal_end_from_capacity(usize capacity) {
   debug_check(capacity > 0);
-  capacity *= 4;
-  capacity /= 3;
+  capacity *= 8;
+  capacity /= 7;
   return 1 << (8 * sizeof(unsigned long long) -
                builtin_clzll((unsigned long long)capacity));
 }
@@ -422,7 +422,7 @@ static void table_internal_should_grow(Table *table_, TableVTable *vtable,
   debug_check(allocator);
 
   Table(byte) *table = table_;
-  if (table->length + table->tombs >= table->end - table->end / 4) {
+  if (table->length + table->tombs >= table->end - table->end / 8) {
     table_internal_realloc(table, vtable, table->end * 2, allocator, error);
   }
 }
