@@ -14,4 +14,7 @@
 #define builtin_clz __builtin_clz
 #define builtin_clzll __builtin_clzll
 
+#define builtin_unreachable __builtin_unreachable
+#define builtin_trap __builtin_trap
+
 #endif // BUILTIN_H_

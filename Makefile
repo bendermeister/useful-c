@@ -1,5 +1,5 @@
 FLAGS := -std=c99 -Wall -Wextra -pedantic
-DEBUG_FLAGS := ${FLAGS} -g -fsanitize=address,leak,undefined,unreachable
+DEBUG_FLAGS := ${FLAGS} -g -fsanitize=address,leak,undefined,unreachable -DDEBUG
 
 all:
 	echo "Useful C"

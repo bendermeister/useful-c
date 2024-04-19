@@ -3,6 +3,7 @@
 
 #include "allocator.h"
 #include "builtin.h"
+#include "debug_check.h"
 #include "error.h"
 #include "types.h"
 
@@ -88,8 +89,6 @@ typedef void (*table_element_destroy_f)(void *element, void *ctx);
  *
  * @brief: Callback used for identifying elements in the table
  *
- * @detailed: Callback used for identifying elements in the table.
- *
  * @param(first): points to the first element
  * @assert(first): `first != NULL`
  * @assert(first): first always holds a valid memory address
@@ -104,10 +103,55 @@ typedef void (*table_element_destroy_f)(void *element, void *ctx);
  */
 typedef bool (*table_element_compare_f)(void *first, void *second, void *ctx);
 
-// TODO: documentation
+/***
+ * @doc(type): table_element_hash_f
+ * @tag: all
+ *
+ * @brief: Callback used for hashing elements in the table.
+ *
+ * @param(element): element which is to be hashed
+ * @assert(element): `element != NULL`
+ * @assert(element): element will always point to a valid memory address
+ *
+ * @param(ctx): context pointer which will be passed from the context pointer
+ * inside the vtable to provide additional information to the function, and
+ * prevent use of global variables
+ */
 typedef u64 (*table_element_hash_f)(void *element, void *ctx);
 
-// TODO: documentation
+/***
+ * @doc(type): TableVTable
+ * @tag: all
+ *
+ * @brief: Struct for generically handling elements in the table.
+ *
+ * @detailed: Struct which provides function pointers to the table which it then
+ * uses internally to manage its elements. Each type is described seperately.
+ *
+ * @member(element_size): `sizeof(element)`. it should represent the object size
+ * of each element in bytes.
+ * @assert(element_size): `element_size > 0`
+ *
+ * @member(destroy): callback for destroying elements. `destoy` may be `NULl` in
+ * which case no destructor will be called. This will make `table_deinit`
+ * significantly faster
+ *
+ * @member(hash): callback for hashing elements
+ * @assert(hash): `hash != NULL`
+ *
+ * @member(insert): callback for inserting elements into the table. Can be
+ * thought of as the constructor of elements in the table
+ * @assert(insert): `insert != NULL`
+ *
+ * @member(compare): callback for comparing elements inside the table
+ * @assert(compare): `compare != NULL`
+ *
+ * @member(overwrite): callback for overwriting elements inside the table.
+ * Useful for maps which need to update the value but not the key
+ * @assert(overwrite): `overwrite != NULL`
+ *
+ * @member(ctx): context pointer passed to each callback. May be `NULL`.
+ */
 typedef struct TableVTable TableVTable;
 struct TableVTable {
   table_element_hash_f hash;
@@ -119,9 +163,25 @@ struct TableVTable {
   void *ctx;
 };
 
+/**
+ * @doc(type): Table
+ * @tag: all
+ *
+ * @brief Opaque pointer to a table struct.
+ *
+ * @detailed: Opaque pointer to a table struct.
+ * @assert: table struct has to follow the form `Table(TYPE)`
+ */
 typedef void Table;
 
-// TODO: documentation
+/***
+ * @doc(type): Table(TYPE)
+ * @tag: all
+ *
+ * @brief struct type for a table with elements of type `TYPE`
+ *
+ * @param(TYPE)
+ */
 #define Table(TYPE)                                                            \
   struct {                                                                     \
     TYPE *element;                                                             \
@@ -136,14 +196,13 @@ typedef void Table;
 #define TABLE_INTERNAL_CONTROL_FREE ((u8)0)
 
 // TODO: documentation
-// TODO: assert
 static u8 table_internal_hash_to_control_byte(u64 hash) {
   return (hash & 255) | TABLE_INTERNAL_CONTROL_ISSET_MASK;
 }
 
 // TODO: documentation
-// TODO: assert
 static usize table_internal_end_from_capacity(usize capacity) {
+  debug_check(capacity > 0);
   capacity *= 4;
   capacity /= 3;
   return 1 << (8 * sizeof(unsigned long long) -
@@ -153,6 +212,9 @@ static usize table_internal_end_from_capacity(usize capacity) {
 // TODO: documentation
 // TODO: assert
 static byte *table_internal_control_array(Table *table_, TableVTable *vtable) {
+  debug_check(table_);
+  debug_check(vtable);
+
   Table(byte) *table = table_;
   return table->element + vtable->element_size * table->end;
 }
@@ -160,6 +222,9 @@ static byte *table_internal_control_array(Table *table_, TableVTable *vtable) {
 // TODO: documentation
 // TODO: assert
 static void table_deinit(Table *table_, Allocator *allocator) {
+  debug_check(table_);
+  debug_check(allocator);
+
   Table(byte) *table = table_;
   allocator_free(allocator, table->element);
 }
@@ -168,6 +233,10 @@ static void table_deinit(Table *table_, Allocator *allocator) {
 // TODO: assert
 static void table_internal_init(Table *table_, TableVTable *vtable, usize end,
                                 Allocator *allocator, Error **error) {
+  debug_check(table_);
+  debug_check(vtable);
+  debug_check(end > 0); // assert end is power of two
+  debug_check(allocator);
 
   Table(byte) *table = table_;
   builtin_memset(table, 0, sizeof(*table));
@@ -199,6 +268,10 @@ static void table_init(Table *table, TableVTable *vtable,
 
 static usize table_internal_find(Table *table_, TableVTable *vtable,
                                  void *element, u64 hash) {
+  debug_check(table_);
+  debug_check(vtable);
+  debug_check(element);
+
   Table(byte) *table = table_;
   const usize mask = table->end - 1;
   usize index = hash & mask;
@@ -242,11 +315,19 @@ static usize table_internal_find(Table *table_, TableVTable *vtable,
 }
 
 static usize table_find(Table *table, TableVTable *vtable, void *element) {
+  debug_check(table);
+  debug_check(vtable);
+  debug_check(element);
+
   return table_internal_find(table, vtable, element,
                              vtable->hash(element, vtable->ctx));
 }
 
 static bool table_isset(Table *table, TableVTable *vtable, usize index) {
+  debug_check(table);
+  debug_check(vtable);
+  debug_check(((Table(byte) *)table)->end > index);
+
   return table_internal_control_array(table, vtable)[index] &
          TABLE_INTERNAL_CONTROL_ISSET_MASK;
 }
@@ -254,29 +335,22 @@ static bool table_isset(Table *table, TableVTable *vtable, usize index) {
 // TODO: table_remove
 
 static bool table_contains(Table *table_, TableVTable *vtable, void *element) {
+  debug_check(table_);
+  debug_check(vtable);
+  debug_check(element);
+
   usize index = table_find(table_, vtable, element);
   return table_isset(table_, vtable, index);
-}
-
-static usize table_inc_index(Table *table_, TableVTable *vtable, usize i) {
-  i += 1;
-  Table(byte) *table = table_;
-  const byte *control = table_internal_control_array(table_, vtable);
-  for (; i < table->end; ++i) {
-    if (LIKELY(control[i] & TABLE_INTERNAL_CONTROL_ISSET_MASK)) {
-      return i;
-    }
-  }
-  return table->end;
-}
-
-static usize table_first_index(Table *table_, TableVTable *vtable) {
-  return table_inc_index(table_, vtable, -1);
 }
 
 static void table_internal_realloc(Table *table_, TableVTable *vtable,
                                    usize end, Allocator *allocator,
                                    Error **error) {
+
+  debug_check(table_);
+  debug_check(vtable);
+  debug_check(end > 0); // TODO: check if end is power of two
+  debug_check(allocator);
 
   // TODO: does this increase capacity more than it should?
   Table(byte) *table = table_;
@@ -316,6 +390,10 @@ static void table_internal_realloc(Table *table_, TableVTable *vtable,
 
 static void table_shrink(Table *table_, TableVTable *vtable,
                          Allocator *allocator, Error **error) {
+  debug_check(table_);
+  debug_check(vtable);
+  debug_check(allocator);
+
   Table(byte) *table = table_;
   usize end = table_internal_end_from_capacity(table->length);
   table_internal_realloc(table, vtable, end, allocator, error);
@@ -323,6 +401,11 @@ static void table_shrink(Table *table_, TableVTable *vtable,
 
 static void table_reserve(Table *table_, TableVTable *vtable, usize capacity,
                           Allocator *allocator, Error **error) {
+  debug_check(table_);
+  debug_check(vtable);
+  debug_check(capacity > 0);
+  debug_check(allocator);
+
   Table(byte) *table = table_;
   usize end = table_internal_end_from_capacity(capacity);
   if (end <= table->end) {
@@ -334,6 +417,10 @@ static void table_reserve(Table *table_, TableVTable *vtable, usize capacity,
 
 static void table_internal_should_grow(Table *table_, TableVTable *vtable,
                                        Allocator *allocator, Error **error) {
+  debug_check(table_);
+  debug_check(vtable);
+  debug_check(allocator);
+
   Table(byte) *table = table_;
   if (table->length + table->tombs >= table->end - table->end / 4) {
     table_internal_realloc(table, vtable, table->end * 2, allocator, error);
@@ -342,6 +429,11 @@ static void table_internal_should_grow(Table *table_, TableVTable *vtable,
 
 static void table_internal_insert(Table *table_, TableVTable *vtable,
                                   void *element, u64 hash, usize index) {
+  debug_check(table_);
+  debug_check(vtable);
+  debug_check(element);
+  debug_check(((Table(byte) *)table_)->end > index);
+
   Table(byte) *table = table_;
   byte *control = table_internal_control_array(table, vtable);
   control[index] = table_internal_hash_to_control_byte(hash);
@@ -355,6 +447,11 @@ static void table_internal_insert(Table *table_, TableVTable *vtable,
 
 static usize table_insert(Table *table_, TableVTable *vtable, void *element,
                           Allocator *allocator, Error **error) {
+  debug_check(table_);
+  debug_check(vtable);
+  debug_check(element);
+  debug_check(allocator);
+
   Table(byte) *table = table_;
   table_internal_should_grow(table, vtable, allocator, error);
   if (UNLIKELY(error && *error)) {
@@ -377,6 +474,11 @@ static usize table_insert(Table *table_, TableVTable *vtable, void *element,
 
 static usize table_upsert(Table *table_, TableVTable *vtable, void *element,
                           Allocator *allocator, Error **error) {
+  debug_check(table_);
+  debug_check(vtable);
+  debug_check(element);
+  debug_check(allocator);
+
   Table(byte) *table = table_;
   table_internal_should_grow(table, vtable, allocator, error);
   if (UNLIKELY(error && *error)) {
