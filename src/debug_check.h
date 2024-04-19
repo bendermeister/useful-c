@@ -5,7 +5,7 @@
 
 #ifdef DEBUG
 #define debug_check(A)                                                         \
-  while (!(A))                                                                 \
+  if (!(A))                                                                    \
   builtin_trap()
 #else
 #define debug_check(A)

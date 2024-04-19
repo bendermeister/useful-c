@@ -2,10 +2,6 @@
 #define ERROR_H_
 
 // TODO: documentation
-typedef struct Error Error;
-struct Error {
-  const char *message;
-  void *ctx;
-};
+typedef int Error;
 
 #endif // ERROR_H_

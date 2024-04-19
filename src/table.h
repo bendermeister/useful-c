@@ -232,7 +232,7 @@ static void table_deinit(Table *table_, Allocator *allocator) {
 // TODO: documentation
 // TODO: assert
 static void table_internal_init(Table *table_, TableVTable *vtable, usize end,
-                                Allocator *allocator, Error **error) {
+                                Allocator *allocator, Error *error) {
   debug_check(table_);
   debug_check(vtable);
   debug_check(end > 0); // assert end is power of two
@@ -256,7 +256,7 @@ static void table_internal_init(Table *table_, TableVTable *vtable, usize end,
 
 static void table_init(Table *table, TableVTable *vtable,
                        usize initial_capacity, Allocator *allocator,
-                       Error **error) {
+                       Error *error) {
   // TODO: this way if end wil always be over 16 this should not be the case if
   // initial capacity can be satisfied with end == 16
   if (initial_capacity < 16) {
@@ -345,7 +345,7 @@ static bool table_contains(Table *table_, TableVTable *vtable, void *element) {
 
 static void table_internal_realloc(Table *table_, TableVTable *vtable,
                                    usize end, Allocator *allocator,
-                                   Error **error) {
+                                   Error *error) {
 
   debug_check(table_);
   debug_check(vtable);
@@ -389,7 +389,7 @@ static void table_internal_realloc(Table *table_, TableVTable *vtable,
 }
 
 static void table_shrink(Table *table_, TableVTable *vtable,
-                         Allocator *allocator, Error **error) {
+                         Allocator *allocator, Error *error) {
   debug_check(table_);
   debug_check(vtable);
   debug_check(allocator);
@@ -400,7 +400,7 @@ static void table_shrink(Table *table_, TableVTable *vtable,
 }
 
 static void table_reserve(Table *table_, TableVTable *vtable, usize capacity,
-                          Allocator *allocator, Error **error) {
+                          Allocator *allocator, Error *error) {
   debug_check(table_);
   debug_check(vtable);
   debug_check(capacity > 0);
@@ -416,7 +416,7 @@ static void table_reserve(Table *table_, TableVTable *vtable, usize capacity,
 }
 
 static void table_internal_should_grow(Table *table_, TableVTable *vtable,
-                                       Allocator *allocator, Error **error) {
+                                       Allocator *allocator, Error *error) {
   debug_check(table_);
   debug_check(vtable);
   debug_check(allocator);
@@ -446,7 +446,7 @@ static void table_internal_insert(Table *table_, TableVTable *vtable,
 }
 
 static usize table_insert(Table *table_, TableVTable *vtable, void *element,
-                          Allocator *allocator, Error **error) {
+                          Allocator *allocator, Error *error) {
   debug_check(table_);
   debug_check(vtable);
   debug_check(element);
@@ -473,7 +473,7 @@ static usize table_insert(Table *table_, TableVTable *vtable, void *element,
 }
 
 static usize table_upsert(Table *table_, TableVTable *vtable, void *element,
-                          Allocator *allocator, Error **error) {
+                          Allocator *allocator, Error *error) {
   debug_check(table_);
   debug_check(vtable);
   debug_check(element);

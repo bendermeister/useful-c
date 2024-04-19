@@ -5,15 +5,16 @@
 #include "macro_util.h"
 #include "types.h"
 
+#include <errno.h>
 #include <stdlib.h>
 
 typedef void Allocator;
 
 typedef void *(*allocator_alloc_f)(Allocator *allocator, usize num_bytes,
-                                   Error **error);
+                                   Error *error);
 
 typedef void *(*allocator_realloc_f)(Allocator *allocator, void *chunk,
-                                     usize num_bytes, Error **error);
+                                     usize num_bytes, Error *error);
 
 typedef void (*allocator_free_f)(Allocator *allocator, void *chunk);
 
@@ -29,26 +30,23 @@ struct AllocatorInternal {
   AllocatorVTable *vtable;
 };
 
-static Error allocator_global_error_ = (Error){.message = "out of memory"};
-static Error *allocator_global_error = &allocator_global_error_;
-
 static void *allocator_internal_global_alloc(Allocator *allocator,
-                                             usize num_bytes, Error **error) {
+                                             usize num_bytes, Error *error) {
   UNUSED(allocator);
   void *p = malloc(num_bytes);
   if (UNLIKELY(error && !p)) {
-    *error = allocator_global_error;
+    *error = ENOMEM;
   }
   return p;
 }
 
 static void *allocator_internal_global_realloc(Allocator *allocator,
                                                void *chunk, usize num_bytes,
-                                               Error **error) {
+                                               Error *error) {
   UNUSED(allocator);
   void *p = realloc(chunk, num_bytes);
   if (UNLIKELY(error && !p)) {
-    *error = allocator_global_error;
+    *error = ENOMEM;
   }
   return p;
 }
@@ -76,13 +74,13 @@ static void allocator_free(Allocator *allocator, void *chunk) {
 }
 
 static void *allocator_alloc(Allocator *allocator, usize num_bytes,
-                             Error **error) {
+                             Error *error) {
   AllocatorInternal *a = allocator;
   return a->vtable->alloc(a, num_bytes, error);
 }
 
 static void *allocator_realloc(Allocator *allocator, void *chunk,
-                               usize num_bytes, Error **error) {
+                               usize num_bytes, Error *error) {
   AllocatorInternal *a = allocator;
   return a->vtable->realloc(a, chunk, num_bytes, error);
 }
