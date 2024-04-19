@@ -166,18 +166,12 @@ static void table_deinit(Table *table_, Allocator *allocator) {
 
 // TODO: documentation
 // TODO: assert
-static void table_init(Table *table_, TableVTable *vtable,
-                       usize initial_capacity, Allocator *allocator,
-                       Error **error) {
-  // TODO: this way if end wil always be over 16 this should not be the case if
-  // initial capacity can be satisfied with end == 16
-  if (initial_capacity < 16) {
-    initial_capacity = 16;
-  }
+static void table_internal_init(Table *table_, TableVTable *vtable, usize end,
+                                Allocator *allocator, Error **error) {
 
   Table(byte) *table = table_;
   builtin_memset(table, 0, sizeof(*table));
-  table->end = table_internal_end_from_capacity(initial_capacity);
+  table->end = end;
 
   usize chunk_size = vtable->element_size * table->end;
   chunk_size += table->end + 16;
@@ -189,6 +183,18 @@ static void table_init(Table *table_, TableVTable *vtable,
 
   byte *control = table_internal_control_array(table, vtable);
   builtin_memset(control, TABLE_INTERNAL_CONTROL_FREE, 16 + table->end);
+}
+
+static void table_init(Table *table, TableVTable *vtable,
+                       usize initial_capacity, Allocator *allocator,
+                       Error **error) {
+  // TODO: this way if end wil always be over 16 this should not be the case if
+  // initial capacity can be satisfied with end == 16
+  if (initial_capacity < 16) {
+    initial_capacity = 16;
+  }
+  usize end = table_internal_end_from_capacity(initial_capacity);
+  table_internal_init(table, vtable, end, allocator, error);
 }
 
 static usize table_internal_find(Table *table_, TableVTable *vtable,
@@ -269,7 +275,7 @@ static usize table_first_index(Table *table_, TableVTable *vtable) {
 }
 
 static void table_internal_realloc(Table *table_, TableVTable *vtable,
-                                   usize capacity, Allocator *allocator,
+                                   usize end, Allocator *allocator,
                                    Error **error) {
 
   // TODO: does this increase capacity more than it should?
@@ -277,7 +283,7 @@ static void table_internal_realloc(Table *table_, TableVTable *vtable,
 
   Table(byte) table_new;
 
-  table_init(&table_new, vtable, capacity, allocator, error);
+  table_internal_init(&table_new, vtable, end, allocator, error);
   if (UNLIKELY(error && *error)) {
     return;
   }
@@ -285,9 +291,12 @@ static void table_internal_realloc(Table *table_, TableVTable *vtable,
   table_new.length = table->length;
 
   byte *table_new_control = table_internal_control_array(&table_new, vtable);
+  byte *table_control = table_internal_control_array(table, vtable);
 
-  for (usize i = table_first_index(table, vtable); i < table->end;
-       i = table_inc_index(table, vtable, i)) {
+  for (usize i = 0; i < table->end; ++i) {
+    if (UNLIKELY(!(table_control[i] & TABLE_INTERNAL_CONTROL_ISSET_MASK))) {
+      continue;
+    }
 
     byte *element = table->element + vtable->element_size * i;
     const u64 hash = vtable->hash(element, vtable->ctx);
@@ -295,14 +304,11 @@ static void table_internal_realloc(Table *table_, TableVTable *vtable,
     builtin_memcpy(table_new.element + vtable->element_size * j, element,
                    vtable->element_size);
     table_new_control[j] = table_internal_hash_to_control_byte(hash);
-    if (j < 16) {
-      table_new_control[j + table->end] =
+    if (UNLIKELY(j < 16)) {
+      table_new_control[j + table_new.end] =
           table_internal_hash_to_control_byte(hash);
     }
   }
-
-  // TODO should allocator free should not be able to error this is just
-  // retarded
 
   allocator_free(allocator, table->element);
   builtin_memcpy(table, &table_new, sizeof(*table));
@@ -311,7 +317,8 @@ static void table_internal_realloc(Table *table_, TableVTable *vtable,
 static void table_shrink(Table *table_, TableVTable *vtable,
                          Allocator *allocator, Error **error) {
   Table(byte) *table = table_;
-  table_internal_realloc(table, vtable, table->length, allocator, error);
+  usize end = table_internal_end_from_capacity(table->length);
+  table_internal_realloc(table, vtable, end, allocator, error);
 }
 
 static void table_reserve(Table *table_, TableVTable *vtable, usize capacity,
@@ -322,7 +329,7 @@ static void table_reserve(Table *table_, TableVTable *vtable, usize capacity,
     return;
   }
 
-  table_internal_realloc(table, vtable, capacity, allocator, error);
+  table_internal_realloc(table, vtable, end, allocator, error);
 }
 
 static void table_internal_should_grow(Table *table_, TableVTable *vtable,
@@ -349,7 +356,6 @@ static void table_internal_insert(Table *table_, TableVTable *vtable,
 static usize table_insert(Table *table_, TableVTable *vtable, void *element,
                           Allocator *allocator, Error **error) {
   Table(byte) *table = table_;
-
   table_internal_should_grow(table, vtable, allocator, error);
   if (UNLIKELY(error && *error)) {
     return -1;
