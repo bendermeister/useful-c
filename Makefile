@@ -16,4 +16,4 @@ example: ${EXAMPLE}
 	${CC} ${DEBUG_FLAGS} $< -o $@
 
 clean:
-	rm -f ./*/*.o ./*/*.out
+	rm -f ./*/*.out ./example/*/*.out

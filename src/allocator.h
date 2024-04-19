@@ -85,4 +85,14 @@ static void *allocator_realloc(Allocator *allocator, void *chunk,
   return a->vtable->realloc(a, chunk, num_bytes, error);
 }
 
+// NOTE: this is stupid but we have to silence unused warnings
+static void _allocator_dummy_callee__(void);
+static void _allocator_dummy_caller__(void) {
+  allocator_free(NULL, NULL);
+  allocator_alloc(NULL, 0, NULL);
+  allocator_realloc(NULL, NULL, 0, NULL);
+  _allocator_dummy_callee__();
+}
+static void _allocator_dummy_callee__(void) { _allocator_dummy_caller__(); }
+
 #endif // ALLOCATOR_H_

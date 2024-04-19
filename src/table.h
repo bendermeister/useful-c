@@ -15,8 +15,8 @@
  *
  * @brief: Callback for inserting elements into the table.
  *
- * @detailed: This callback is used by `table_insert` and `table_upsert` when we
- * are inserting an element into the table, which is not already present.
+ * @detailed: This callback is used by `table_insert` and `table_upsert` when
+ * inserting an element into the table, which is not already present.
  * `table_element_insert_f` is required to prepare `dest` in such a way that the
  * `dest` element can later be identified via `table_element_compare_f`. You can
  * think of this function as the constructor of the elements in the table.
@@ -35,7 +35,7 @@
  * inside the vtable to provide additional information to the function, and
  * prevent use of global variables
  */
-typedef void (*table_element_insert_f)(void *dest, void *src, void *ctx);
+typedef void (*table_element_insert_f)(void *dest, const void *src, void *ctx);
 
 /**
  * @doc(type): table_element_overwrite_f
@@ -61,7 +61,8 @@ typedef void (*table_element_insert_f)(void *dest, void *src, void *ctx);
  * inside the vtable to provide additional information to the function, and
  * prevent use of global variables
  */
-typedef void (*table_element_overwrite_f)(void *dest, void *src, void *ctx);
+typedef void (*table_element_overwrite_f)(void *dest, const void *src,
+                                          void *ctx);
 
 /**
  * @doc(type): table_element_destroy_f
@@ -101,7 +102,8 @@ typedef void (*table_element_destroy_f)(void *element, void *ctx);
  * inside the vtable to provide additional information to the function, and
  * prevent use of global variables
  */
-typedef bool (*table_element_compare_f)(void *first, void *second, void *ctx);
+typedef bool (*table_element_compare_f)(const void *first, const void *second,
+                                        void *ctx);
 
 /***
  * @doc(type): table_element_hash_f
@@ -117,7 +119,7 @@ typedef bool (*table_element_compare_f)(void *first, void *second, void *ctx);
  * inside the vtable to provide additional information to the function, and
  * prevent use of global variables
  */
-typedef u64 (*table_element_hash_f)(void *element, void *ctx);
+typedef u64 (*table_element_hash_f)(const void *element, void *ctx);
 
 /***
  * @doc(type): TableVTable
@@ -211,11 +213,12 @@ static usize table_internal_end_from_capacity(usize capacity) {
 
 // TODO: documentation
 // TODO: assert
-static byte *table_internal_control_array(Table *table_, TableVTable *vtable) {
+static byte *table_internal_control_array(const Table *table_,
+                                          const TableVTable *vtable) {
   debug_check(table_);
   debug_check(vtable);
 
-  Table(byte) *table = table_;
+  const Table(byte) *table = table_;
   return table->element + vtable->element_size * table->end;
 }
 
@@ -231,8 +234,8 @@ static void table_deinit(Table *table_, Allocator *allocator) {
 
 // TODO: documentation
 // TODO: assert
-static void table_internal_init(Table *table_, TableVTable *vtable, usize end,
-                                Allocator *allocator, Error *error) {
+static void table_internal_init(Table *table_, const TableVTable *vtable,
+                                usize end, Allocator *allocator, Error *error) {
   debug_check(table_);
   debug_check(vtable);
   debug_check(end > 0); // assert end is power of two
@@ -254,7 +257,7 @@ static void table_internal_init(Table *table_, TableVTable *vtable, usize end,
   builtin_memset(control, TABLE_INTERNAL_CONTROL_FREE, 16 + table->end);
 }
 
-static void table_init(Table *table, TableVTable *vtable,
+static void table_init(Table *table, const TableVTable *vtable,
                        usize initial_capacity, Allocator *allocator,
                        Error *error) {
   // TODO: this way if end wil always be over 16 this should not be the case if
@@ -266,13 +269,14 @@ static void table_init(Table *table, TableVTable *vtable,
   table_internal_init(table, vtable, end, allocator, error);
 }
 
-static usize table_internal_find(Table *table_, TableVTable *vtable,
-                                 void *element, u64 hash) {
+static usize table_internal_find(const Table *table_, const TableVTable *vtable,
+                                 const void *element, u64 hash) {
+  // TODO: quadratic probing
   debug_check(table_);
   debug_check(vtable);
   debug_check(element);
 
-  Table(byte) *table = table_;
+  const Table(byte) *table = table_;
   const usize mask = table->end - 1;
   usize index = hash & mask;
   const __m128i control_mask =
@@ -314,7 +318,8 @@ static usize table_internal_find(Table *table_, TableVTable *vtable,
   }
 }
 
-static usize table_find(Table *table, TableVTable *vtable, void *element) {
+static usize table_find(const Table *table, const TableVTable *vtable,
+                        const void *element) {
   debug_check(table);
   debug_check(vtable);
   debug_check(element);
@@ -323,7 +328,8 @@ static usize table_find(Table *table, TableVTable *vtable, void *element) {
                              vtable->hash(element, vtable->ctx));
 }
 
-static bool table_isset(Table *table, TableVTable *vtable, usize index) {
+static bool table_isset(const Table *table, const TableVTable *vtable,
+                        usize index) {
   debug_check(table);
   debug_check(vtable);
   debug_check(((Table(byte) *)table)->end > index);
@@ -334,7 +340,8 @@ static bool table_isset(Table *table, TableVTable *vtable, usize index) {
 
 // TODO: table_remove
 
-static bool table_contains(Table *table_, TableVTable *vtable, void *element) {
+static bool table_contains(const Table *table_, const TableVTable *vtable,
+                           const void *element) {
   debug_check(table_);
   debug_check(vtable);
   debug_check(element);
@@ -343,7 +350,7 @@ static bool table_contains(Table *table_, TableVTable *vtable, void *element) {
   return table_isset(table_, vtable, index);
 }
 
-static void table_internal_realloc(Table *table_, TableVTable *vtable,
+static void table_internal_realloc(Table *table_, const TableVTable *vtable,
                                    usize end, Allocator *allocator,
                                    Error *error) {
 
@@ -388,7 +395,7 @@ static void table_internal_realloc(Table *table_, TableVTable *vtable,
   builtin_memcpy(table, &table_new, sizeof(*table));
 }
 
-static void table_shrink(Table *table_, TableVTable *vtable,
+static void table_shrink(Table *table_, const TableVTable *vtable,
                          Allocator *allocator, Error *error) {
   debug_check(table_);
   debug_check(vtable);
@@ -399,8 +406,8 @@ static void table_shrink(Table *table_, TableVTable *vtable,
   table_internal_realloc(table, vtable, end, allocator, error);
 }
 
-static void table_reserve(Table *table_, TableVTable *vtable, usize capacity,
-                          Allocator *allocator, Error *error) {
+static void table_reserve(Table *table_, const TableVTable *vtable,
+                          usize capacity, Allocator *allocator, Error *error) {
   debug_check(table_);
   debug_check(vtable);
   debug_check(capacity > 0);
@@ -415,7 +422,7 @@ static void table_reserve(Table *table_, TableVTable *vtable, usize capacity,
   table_internal_realloc(table, vtable, end, allocator, error);
 }
 
-static void table_internal_should_grow(Table *table_, TableVTable *vtable,
+static void table_internal_should_grow(Table *table_, const TableVTable *vtable,
                                        Allocator *allocator, Error *error) {
   debug_check(table_);
   debug_check(vtable);
@@ -427,8 +434,8 @@ static void table_internal_should_grow(Table *table_, TableVTable *vtable,
   }
 }
 
-static void table_internal_insert(Table *table_, TableVTable *vtable,
-                                  void *element, u64 hash, usize index) {
+static void table_internal_insert(Table *table_, const TableVTable *vtable,
+                                  const void *element, u64 hash, usize index) {
   debug_check(table_);
   debug_check(vtable);
   debug_check(element);
@@ -445,8 +452,9 @@ static void table_internal_insert(Table *table_, TableVTable *vtable,
   table->length += 1;
 }
 
-static usize table_insert(Table *table_, TableVTable *vtable, void *element,
-                          Allocator *allocator, Error *error) {
+static usize table_insert(Table *table_, const TableVTable *vtable,
+                          const void *element, Allocator *allocator,
+                          Error *error) {
   debug_check(table_);
   debug_check(vtable);
   debug_check(element);
@@ -472,8 +480,9 @@ static usize table_insert(Table *table_, TableVTable *vtable, void *element,
   return index;
 }
 
-static usize table_upsert(Table *table_, TableVTable *vtable, void *element,
-                          Allocator *allocator, Error *error) {
+static usize table_upsert(Table *table_, const TableVTable *vtable,
+                          const void *element, Allocator *allocator,
+                          Error *error) {
   debug_check(table_);
   debug_check(vtable);
   debug_check(element);
@@ -493,5 +502,25 @@ static usize table_upsert(Table *table_, TableVTable *vtable, void *element,
   }
   return index;
 }
+
+// NOTE: this is really stupid but we need to get rid of unwanted unused
+// warnings without attributes
+static void _table_dummy_callee__(void);
+static void _table_dummy_caller__(void) {
+  table_init(NULL, NULL, 0, NULL, NULL);
+  table_deinit(NULL, NULL);
+
+  table_insert(NULL, NULL, NULL, NULL, NULL);
+  table_upsert(NULL, NULL, NULL, NULL, NULL);
+
+  table_reserve(NULL, NULL, 0, NULL, NULL);
+  table_shrink(NULL, NULL, NULL, NULL);
+
+  table_find(NULL, NULL, NULL);
+  table_isset(NULL, NULL, 0);
+  table_contains(NULL, NULL, NULL);
+  _table_dummy_callee__();
+}
+static void _table_dummy_callee__(void) { _table_dummy_caller__(); }
 
 #endif // TABLE_H_

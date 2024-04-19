@@ -1,19 +1,19 @@
 #include "../src/table.h"
 #include "test.h"
 
-bool int_compare(void *a, void *b, void *ctx) {
+static bool int_compare(const void *a, const void *b, void *ctx) {
   UNUSED(ctx);
-  return *(int *)a == *(int *)b;
+  return *(const int *)a == *(const int *)b;
 }
 
-void int_insert(void *dest, void *src, void *ctx) {
+static void int_insert(void *dest, const void *src, void *ctx) {
   UNUSED(ctx);
-  *(int *)dest = *(int *)src;
+  *(int *)dest = *(const int *)src;
 }
 
-u64 int_hash(void *d, void *ctx) {
+static u64 int_hash(const void *d, void *ctx) {
   UNUSED(ctx);
-  char *s = d;
+  const char *s = d;
   u64 hash = 1111111111111111111ul;
   for (int i = 0; i < 4; ++i) {
     hash *= 31;
@@ -22,12 +22,12 @@ u64 int_hash(void *d, void *ctx) {
   return hash;
 }
 
-static TableVTable vtable = (TableVTable){
+static const TableVTable vtable = (TableVTable){
     .element_size = sizeof(int),
-    .compare = int_compare,
-    .insert = int_insert,
-    .hash = int_hash,
-    .overwrite = int_insert,
+    .compare = &int_compare,
+    .insert = &int_insert,
+    .hash = &int_hash,
+    .overwrite = &int_insert,
 };
 
 static void test__insert_find(void) {

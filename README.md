@@ -1,5 +1,5 @@
 # Useful C
-a small collection of header only libraries useful when coding c
+a small collection of C99 header only libraries useful when coding c
 
 ## Basic Ideas
 ### Error Handling
