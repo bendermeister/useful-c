@@ -2,6 +2,7 @@
 *.d
 
 .ccls-cache/*
+.cache/*
 docs/*
 
 # Object files
