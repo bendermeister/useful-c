@@ -1,4 +1,4 @@
-FLAGS := -std=c99 -Wall -Wextra -pedantic
+FLAGS := -std=c99 -Wall -Wextra -pedantic -I src
 DEBUG_FLAGS := ${FLAGS} -g -fsanitize=address,leak,undefined,unreachable -DDEBUG
 
 all: test example

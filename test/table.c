@@ -1,5 +1,5 @@
-#include "../src/table.h"
 #include "test.h"
+#include <uc/table.h>
 
 static bool int_compare(const void *a, const void *b, void *ctx) {
   UNUSED(ctx);

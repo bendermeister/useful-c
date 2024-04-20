@@ -1,5 +1,6 @@
-#include "../../src/error.h"
-#include "../../src/types.h"
+#include <uc/error.h>
+#include <uc/types.h>
+
 #include <stdio.h>
 
 // divide may error if b == 0, therefore an error parameter, and an error value
