@@ -20,5 +20,13 @@ example/ucx/ucx.out: example/ucx/*
 	${CC} ${DEBUG_FLAGS} -c example/ucx/main.c -o example/ucx/main.o
 	${CC} ${DEBUG_FLAGS} example/ucx/main.o example/ucx/ucx.impl.o -o example/ucx/ucx.out
 
+INSTALL_DIR := /usr/local/include
+
+install:
+	cp -r src/uc ${INSTALL_DIR}
+
+uninstall:
+	rm -rf ${INSTALL_DIR}/uc
+
 clean:
 	rm -f ./*/*.out ./example/*/*.out ./example/*/*.o
