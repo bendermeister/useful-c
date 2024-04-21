@@ -20,6 +20,8 @@ A wrapper around gcc and clang builtin funtion with fallbacks for compilers with
 - some concurrency model, 
 - I quite like the go concurrency model and it would be cool to port it to c
 - it should be some sort of green threads implementation and not acutal hardware threads
+### return to
+- getcontext(3p)
 
 ## btree
 - some btree implementation maybe even a b* with actual file backing would be pretty sweet
