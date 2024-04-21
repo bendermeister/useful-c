@@ -7,8 +7,84 @@
 #include <uc/error.h>
 #include <uc/types.h>
 
-// TODO: move this too uc wrapper
 #include <emmintrin.h>
+
+/***
+ * @doc(type): table_element_insert_f
+ * @tag: all
+ *
+ * @brief: Callback for inserting elements into the table.
+ *
+ * @detailed: This callback is used by `table_insert` and `table_upsert` when
+ * inserting an element into the table, which is not already present.
+ * `table_element_insert_f` is required to prepare `dest` in such a way that
+ * the `dest` element can later be identified via `table_element_compare_f`.
+ * You can think of this function as the constructor of the elements in the
+ * table.
+ *
+ * @param(dest): destination element, pointer to the position where the `*src`
+ * is to be inserted.
+ * @assert(dest): `dest != NULL`
+ * @assert(dest): `dest` will hold a valid memory address
+ *
+ * @param(src): source element, pointer to the element which is to be inserted
+ * into `*dest`.
+ * @assert(src): `src != NULL`
+ * @assert(src): `src` will hold a valid memory address
+ *
+ * @param(ctx): context pointer which will be passed from the context pointer
+ * inside the vtable to provide additional information to the function, and
+ * prevent use of global variables
+ */
+typedef void (*table_element_insert_f)(void *dest, const void *src, void *ctx);
+
+/**
+ * @doc(type): table_element_overwrite_f
+ * @tag: all
+ *
+ * @brief: Callback for overwriting elements in the table.
+ *
+ * @detailed: This callback is used by `table_insert` to overwrite elements in
+ * the table which are already present. `table_element_overwrite_f` is
+ * required to leave `dest` in such a state that it can later be identified by
+ * `table_element_compare_f`
+ *
+ * @param(dest): destination pointer which will be overwritten by `src`
+ * @assert(dest): `dest != NULL`
+ * @assert(dest): `dest` will hold a valid memory address
+ *
+ * @param(src): source element, pointer to the element which will overwrite
+ * `*dest`
+ * @assert(src): `src != NULL`
+ * @assert(src): `src` will hold a valid memory address
+ *
+ * @param(ctx): context pointer which will be inserted from the context pointer
+ * inside the vtable to provide additional information to the function, and
+ * prevent use of global variables
+ */
+typedef void (*table_element_overwrite_f)(void *dest, const void *src,
+                                          void *ctx);
+
+/**
+ * @doc(type): table_element_destroy_f
+ * @tag: all
+ *
+ * @brief: Callback for destroying elements in the table.
+ *
+ * @detailed: Callback for destoying elements in the table. It will be called
+ * by `table_remove` on the removed element and by `table_destroy` on each
+ * element. It may be `NULL` in which case it will never get called.
+ *
+ * @param(element): element which is to be destroyed
+ * @assert(element): `element != NULL`
+ * @assert(element): element will always contain a valid memory address
+ *
+ * @param(ctx): context pointer which will be passed from the context pointer
+ * inside the vtable to provide additional information to the function, and
+ * prevent use of global variables
+ */
+typedef void (*table_element_destroy_f)(void *element, void *ctx);
+
 /**
  * @doc(type): table_element_compare_f
  * @tag: all
@@ -60,17 +136,33 @@ typedef u64 (*table_element_hash_f)(const void *element, void *ctx);
  * of each element in bytes.
  * @assert(element_size): `element_size > 0`
  *
+ * @member(destroy): callback for destroying elements. `destoy` may be `NULl` in
+ * which case no destructor will be called. This will make `table_deinit`
+ * significantly faster
+ *
  * @member(hash): callback for hashing elements
  * @assert(hash): `hash != NULL`
  *
+ * @member(insert): callback for inserting elements into the table. Can be
+ * thought of as the constructor of elements in the table
+ * @assert(insert): `insert != NULL`
+ *
  * @member(compare): callback for comparing elements inside the table
  * @assert(compare): `compare != NULL`
+ *
+ * @member(overwrite): callback for overwriting elements inside the table.
+ * Useful for maps which need to update the value but not the key
+ * @assert(overwrite): `overwrite != NULL`
+ *
+ * @member(ctx): context pointer passed to each callback. May be `NULL`.
  */
-
 typedef struct TableVTable TableVTable;
 struct TableVTable {
   table_element_hash_f hash;
+  table_element_insert_f insert;
   table_element_compare_f compare;
+  table_element_destroy_f destroy;
+  table_element_overwrite_f overwrite;
   usize element_size;
   void *ctx;
 };
@@ -357,8 +449,8 @@ static void table_internal_insert(Table *table_, const TableVTable *vtable,
   if (index < 16) {
     control[index + table->end] = table_internal_hash_to_control_byte(hash);
   }
-  builtin_memcpy(table->element + index * vtable->element_size, element,
-                 vtable->element_size);
+  vtable->insert(table->element + index * vtable->element_size, element,
+                 vtable->ctx);
   table->length += 1;
 }
 
@@ -382,8 +474,8 @@ static usize table_insert(Table *table_, const TableVTable *vtable,
   byte *control = table_internal_control_array(table, vtable);
 
   if (control[index] & TABLE_INTERNAL_CONTROL_ISSET_MASK) {
-    builtin_memcpy(table->element + index * vtable->element_size, element,
-                   vtable->element_size);
+    vtable->overwrite(table->element + index * vtable->element_size, element,
+                      vtable->ctx);
   } else {
     table_internal_insert(table, vtable, element, hash, index);
   }

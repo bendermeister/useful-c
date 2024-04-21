@@ -6,6 +6,11 @@ static bool int_compare(const void *a, const void *b, void *ctx) {
   return *(const int *)a == *(const int *)b;
 }
 
+static void int_insert(void *dest, const void *src, void *ctx) {
+  UNUSED(ctx);
+  *(int *)dest = *(const int *)src;
+}
+
 static u64 int_hash(const void *d, void *ctx) {
   UNUSED(ctx);
   const char *s = d;
@@ -20,7 +25,9 @@ static u64 int_hash(const void *d, void *ctx) {
 static const TableVTable vtable = (TableVTable){
     .element_size = sizeof(int),
     .compare = &int_compare,
+    .insert = &int_insert,
     .hash = &int_hash,
+    .overwrite = &int_insert,
 };
 
 static void test__insert_find(void) {

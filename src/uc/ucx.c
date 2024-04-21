@@ -1,5 +1,5 @@
 #include <uc/allocator.h>
-#include <uc/otable.h>
+#include <uc/table.h>
 /***
  * @file
  * Wrapper to compile UC libs in a single translation unit and later link it
@@ -7,7 +7,6 @@
  * macro and type.
  *
  */
-#include <uc/table.h>
 #include <uc/types.h>
 #include <uc/vec.h>
 
@@ -100,7 +99,7 @@ void ucx_vec_shrink(ucx_Vec *vec, usize element_size, ucx_Allocator *allocator,
   vec_shrink(vec, element_size, allocator, error);
 }
 
-// ********************************Table*****************************************
+// ********************************Table****************************************
 
 void ucx_table_deinit(ucx_Table *table_, ucx_Allocator *allocator) {
   table_deinit(table_, allocator);
@@ -137,63 +136,15 @@ void ucx_table_reserve(ucx_Table *table_, const ucx_TableVTable *vtable,
                        ucx_Error *error) {
   table_reserve(table_, (void *)vtable, capacity, allocator, error);
 }
+
 usize ucx_table_insert(ucx_Table *table_, const ucx_TableVTable *vtable,
                        const void *element, ucx_Allocator *allocator,
                        ucx_Error *error) {
   return table_insert(table_, (void *)vtable, element, allocator, error);
 }
+
 usize ucx_table_upsert(ucx_Table *table_, const ucx_TableVTable *vtable,
                        const void *element, ucx_Allocator *allocator,
                        ucx_Error *error) {
   return table_upsert(table_, (void *)vtable, element, allocator, error);
-}
-
-// ********************************OTable****************************************
-
-void ucx_otable_deinit(ucx_OTable *otable_, ucx_Allocator *allocator) {
-  otable_deinit(otable_, allocator);
-}
-
-void ucx_otable_init(ucx_OTable *otable, const ucx_OTableVTable *votable,
-                     usize initial_capacity, ucx_Allocator *allocator,
-                     ucx_Error *error) {
-  otable_init(otable, (void *)votable, initial_capacity, allocator, error);
-}
-
-usize ucx_otable_find(const ucx_OTable *otable, const ucx_OTableVTable *votable,
-                      const void *element) {
-  return otable_find(otable, (void *)votable, element);
-}
-
-bool ucx_otable_isset(const ucx_OTable *otable, const ucx_OTableVTable *votable,
-                      usize index) {
-  return otable_isset(otable, (void *)votable, index);
-}
-
-bool ucx_otable_contains(const ucx_OTable *otable_,
-                         const ucx_OTableVTable *votable, const void *element) {
-  return otable_contains(otable_, (void *)votable, element);
-}
-
-void ucx_otable_shrink(ucx_OTable *otable_, const ucx_OTableVTable *votable,
-                       ucx_Allocator *allocator, ucx_Error *error) {
-  otable_shrink(otable_, (void *)votable, allocator, error);
-}
-
-void ucx_otable_reserve(ucx_OTable *otable_, const ucx_OTableVTable *votable,
-                        usize capacity, ucx_Allocator *allocator,
-                        ucx_Error *error) {
-  otable_reserve(otable_, (void *)votable, capacity, allocator, error);
-}
-
-usize ucx_otable_insert(ucx_OTable *otable_, const ucx_OTableVTable *votable,
-                        const void *element, ucx_Allocator *allocator,
-                        ucx_Error *error) {
-  return otable_insert(otable_, (void *)votable, element, allocator, error);
-}
-
-usize ucx_otable_upsert(ucx_OTable *otable_, const ucx_OTableVTable *votable,
-                        const void *element, ucx_Allocator *allocator,
-                        ucx_Error *error) {
-  return otable_upsert(otable_, (void *)votable, element, allocator, error);
 }
