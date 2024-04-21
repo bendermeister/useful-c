@@ -3,6 +3,7 @@ compile_commands.json
 *.d
 
 .ccls-cache/*
+.cache/*
 docs/*
 
 # Object files
