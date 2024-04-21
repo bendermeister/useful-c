@@ -292,7 +292,6 @@ static void vec_internal_grow_if_needed(Vec *vec_, usize element_size,
   debug_check(vec_);
   debug_check(element_size > 0);
   debug_check(allocator);
-  debug_check(error);
 
   Vec(byte) *vec = vec_;
   if (vec->length >= vec->end) {

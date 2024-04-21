@@ -1,9 +1,9 @@
 #ifndef ALLOCATOR_H_
 #define ALLOCATOR_H_
 
-#include "error.h"
-#include "macro_util.h"
-#include "types.h"
+#include <uc/error.h>
+#include <uc/macro_util.h>
+#include <uc/types.h>
 
 #include <errno.h>
 #include <stdlib.h>
