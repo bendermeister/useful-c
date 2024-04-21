@@ -4,7 +4,7 @@ DEBUG_FLAGS := ${FLAGS} -g -fsanitize=address,leak,undefined,unreachable -DDEBUG
 all: test example
 	echo "Useful C"
 
-TEST := test/table.out
+TEST := test/table.out test/vec.out
 
 EXAMPLE := example/error/error.out
 

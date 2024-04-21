@@ -124,6 +124,23 @@ static void vec_push(Vec *vec, usize element_size, const void *element,
                      Allocator *allocator, Error *error);
 
 /***
+ * @doc(function): vec_pop
+ * @tag: all
+ *
+ * @brief: moves the last element in the vector into `dest`
+ *
+ * @param(vec): vec where the element will be inserted
+ * @assert(vec): `vec != NULL`
+ * @assert(vec): `vec` must have been initilized with `vec_init`
+ *
+ * @param(element_size): size of the elements in the vec
+ * @assert(element_size): `element_size > 0`
+ *
+ * @param(dest): destination pointer for the popped element. may be `NULL`
+ */
+static void vec_pop(Vec *vec, usize element_size, void *dest);
+
+/***
  * @doc(function): vec_insert
  * @tag: all
  *
@@ -350,6 +367,22 @@ static void vec_push(Vec *vec_, usize element_size, const void *element,
   vec->length += 1;
 }
 
+static void vec_pop(Vec *vec_, usize element_size, void *dest) {
+  debug_check(vec_);
+  debug_check(element_size > 0);
+
+  Vec(byte) *vec = vec_;
+
+  if (!vec->length) {
+    return;
+  }
+  vec->length -= 1;
+  if (dest) {
+    void *src = vec->element + vec->length * element_size;
+    builtin_memcpy(dest, src, element_size);
+  }
+}
+
 static void vec_insert(Vec *vec_, usize element_size, usize index,
                        const void *element, Allocator *allocator,
                        Error *error) {
@@ -383,7 +416,11 @@ static void vec_remove(Vec *vec_, usize element_size, usize index) {
 
   debug_check(index < vec->length);
 
-  // TODO:
+  byte *dest = vec->element + element_size * index;
+  byte *src = dest + element_size;
+  usize num_bytes = element_size * (vec->length - index - 1);
+  builtin_memmove(dest, src, num_bytes);
+  vec->length -= 1;
 }
 
 static void vec_clear(Vec *vec_, usize element_size) {
@@ -422,4 +459,26 @@ static void vec_shrink(Vec *vec_, usize element_size, Allocator *allocator,
   }
   vec_internal_realloc(vec, element_size, vec->length, allocator, error);
 }
+
+//*********************************UNUSED*WRAPPER************************************************/
+//
+static void _vec_internal_dummy_wrapper_wrapper__(void);
+static void _vec_internal_dummy_wrapper__(void) {
+  vec_init(NULL, 0, 0, NULL, NULL);
+  vec_deinit(NULL, 0, NULL);
+  vec_more(NULL, 0, NULL, NULL);
+  vec_push(NULL, 0, NULL, NULL, NULL);
+  vec_pop(NULL, 0, NULL);
+  vec_insert(NULL, 0, 0, NULL, NULL, NULL);
+  vec_remove(NULL, 0, 0);
+  vec_clear(NULL, 0);
+  vec_reserve(NULL, 0, 0, NULL, NULL);
+  vec_shrink(NULL, 0, NULL, NULL);
+  _vec_internal_dummy_wrapper_wrapper__();
+}
+
+static void _vec_internal_dummy_wrapper_wrapper__(void) {
+  _vec_internal_dummy_wrapper__();
+}
+
 #endif // VEC_H_
