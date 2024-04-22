@@ -86,13 +86,13 @@ static void *allocator_realloc(Allocator *allocator, void *chunk,
 }
 
 // NOTE: this is stupid but we have to silence unused warnings
-static void _allocator_dummy_callee__(void);
-static void _allocator_dummy_caller__(void) {
-  allocator_free(NULL, NULL);
-  allocator_alloc(NULL, 0, NULL);
-  allocator_realloc(NULL, NULL, 0, NULL);
-  _allocator_dummy_callee__();
+static void allocator_dummy_callee__(void);
+static void allocator_dummy_caller__(void) {
+  allocator_free(allocator_global, NULL);
+  allocator_alloc(allocator_global, 0, NULL);
+  allocator_realloc(allocator_global, NULL, 0, NULL);
+  allocator_dummy_callee__();
 }
-static void _allocator_dummy_callee__(void) { _allocator_dummy_caller__(); }
+static void allocator_dummy_callee__(void) { allocator_dummy_caller__(); }
 
 #endif // ALLOCATOR_H_

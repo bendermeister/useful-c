@@ -111,4 +111,16 @@ static void arena_init(Arena *arena, void *chunk, usize chunk_size) {
   arena->end = chunk_size;
 }
 
+// ********************************UNUSED*WRAPPER*******************************
+static void arena_unused_dummy_wrapper_(void);
+static void arena_unused_dummy_wrapper__(void) {
+  Arena arena;
+  arena_init(&arena, NULL, 0);
+  arena_unused_dummy_wrapper_();
+}
+
+static void arena_unused_dummy_wrapper_(void) {
+  arena_unused_dummy_wrapper__();
+}
+
 #endif // ARENA_H_

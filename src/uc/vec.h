@@ -461,8 +461,8 @@ static void vec_shrink(Vec *vec_, usize element_size, Allocator *allocator,
 
 //*********************************UNUSED*WRAPPER************************************************/
 //
-static void _vec_internal_dummy_wrapper_wrapper__(void);
-static void _vec_internal_dummy_wrapper__(void) {
+static void vec_internal_dummy_wrapper_wrapper__(void);
+static void vec_internal_dummy_wrapper__(void) {
   vec_init(NULL, 0, 0, NULL, NULL);
   vec_deinit(NULL, 0, NULL);
   vec_more(NULL, 0, NULL, NULL);
@@ -473,11 +473,11 @@ static void _vec_internal_dummy_wrapper__(void) {
   vec_clear(NULL, 0);
   vec_reserve(NULL, 0, 0, NULL, NULL);
   vec_shrink(NULL, 0, NULL, NULL);
-  _vec_internal_dummy_wrapper_wrapper__();
+  vec_internal_dummy_wrapper_wrapper__();
 }
 
-static void _vec_internal_dummy_wrapper_wrapper__(void) {
-  _vec_internal_dummy_wrapper__();
+static void vec_internal_dummy_wrapper_wrapper__(void) {
+  vec_internal_dummy_wrapper__();
 }
 
 #endif // VEC_H_

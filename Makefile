@@ -5,7 +5,6 @@ all: test example
 	echo "Useful C"
 
 TEST := test/vec.out test/table.out test/arena.out
-
 EXAMPLE := example/error/error.out example/ucx/ucx.out
 
 test: ${TEST}
@@ -27,6 +26,9 @@ install:
 
 uninstall:
 	rm -rf ${INSTALL_DIR}/uc
+
+tidy:
+	clang-tidy --checks=cert-* src/uc/*.h src/uc/*.c test/*.c test/*.h example/*/*.c
 
 clean:
 	rm -f ./*/*.out ./example/*/*.out ./example/*/*.o

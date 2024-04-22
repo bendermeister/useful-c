@@ -29,15 +29,15 @@ int main(void) {
 
   // now we can handle the error
   if (error) {
-    fprintf(stderr, "Error: you can't divide: 5 by 0\n");
+    (void)fprintf(stderr, "Error: you can't divide: 5 by 0\n");
   } else {
-    fprintf(stdout, "5 divided by 0 is: %d\n", result);
+    (void)fprintf(stdout, "5 divided by 0 is: %d\n", result);
   }
 
   // if we are sure a function will not error we are allowed to provide a NULL
   // pointer as the error parameter
   result = divide(345, 5, NULL);
-  fprintf(stdout, "345 / 5 = %d\n", result);
+  (void)fprintf(stdout, "345 / 5 = %d\n", result);
 
   return 0;
 }

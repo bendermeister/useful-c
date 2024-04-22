@@ -507,8 +507,8 @@ static usize table_upsert(Table *table_, const TableVTable *vtable,
 
 // NOTE: this is really stupid but we need to get rid of unwanted unused
 // warnings without attributes
-static void _table_dummy_callee__(void);
-static void _table_dummy_caller__(void) {
+static void table_dummy_callee__(void);
+static void table_dummy_caller__(void) {
   table_init(NULL, NULL, 0, NULL, NULL);
   table_deinit(NULL, NULL);
 
@@ -521,8 +521,8 @@ static void _table_dummy_caller__(void) {
   table_find(NULL, NULL, NULL);
   table_isset(NULL, NULL, 0);
   table_contains(NULL, NULL, NULL);
-  _table_dummy_callee__();
+  table_dummy_callee__();
 }
-static void _table_dummy_callee__(void) { _table_dummy_caller__(); }
+static void table_dummy_callee__(void) { table_dummy_caller__(); }
 
 #endif // TABLE_H_
