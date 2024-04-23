@@ -1,6 +1,10 @@
 #ifndef TABLE_H_
 #define TABLE_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <uc/allocator.h>
 #include <uc/builtin.h>
 #include <uc/debug_check.h>
@@ -524,5 +528,9 @@ static void table_dummy_caller__(void) {
   table_dummy_callee__();
 }
 static void table_dummy_callee__(void) { table_dummy_caller__(); }
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // TABLE_H_

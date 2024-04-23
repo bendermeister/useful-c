@@ -1,6 +1,10 @@
 #ifndef ALLOCATOR_H_
 #define ALLOCATOR_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <uc/error.h>
 #include <uc/macro_util.h>
 #include <uc/types.h>
@@ -94,5 +98,9 @@ static void allocator_dummy_caller__(void) {
   allocator_dummy_callee__();
 }
 static void allocator_dummy_callee__(void) { allocator_dummy_caller__(); }
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // ALLOCATOR_H_

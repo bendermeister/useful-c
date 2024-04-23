@@ -22,6 +22,7 @@ A wrapper around gcc and clang builtin funtion with fallbacks for compilers with
 - it should be some sort of green threads implementation and not acutal hardware threads
 ### return to
 - getcontext(3p)
+- round robin task schedulers
 
 ## btree
 - some btree implementation maybe even a b* with actual file backing would be pretty sweet
